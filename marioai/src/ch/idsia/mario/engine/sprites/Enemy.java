@@ -37,29 +37,13 @@ public class Enemy extends Sprite
 
     public boolean winged = true;
     private int wingTime = 0;
-    
+
     public boolean noFireballDeath;
 
-    public Enemy(LevelScene world, int x, int y, int dir, int type, boolean winged, int mapX, int mapY)
+    // constructor now declared private and can only be created by the enemy builder.
+    // A lot of logic moved to sprite instead.
+    private Enemy(LevelScene world, int x, int y, int dir, boolean winged, int mapX, int mapY, byte k, int type)
     {
-        byte k = KIND_UNDEF;
-        switch (type)
-        {
-            case ENEMY_RED_KOOPA:
-                k = (byte) (4 + ((winged) ? 1 : 0));
-                break;
-            case ENEMY_GREEN_KOOPA:
-                k = (byte) (6 + ((winged) ? 1 : 0));
-                break;
-            case ENEMY_GOOMBA:
-                k = (byte) (2 + ((winged) ? 1 : 0));
-                break;
-            case ENEMY_FLOWER:
-                k = (byte) (11);
-                break;
-            case ENEMY_SPIKY:
-                k = (byte) (9 + ((winged) ? 1 : 0));
-        }
         kind = k;
         this.type = type;
         sheet = Art.enemies;
@@ -69,13 +53,13 @@ public class Enemy extends Sprite
         this.y = y;
         this.mapX = mapX;
         this.mapY = mapY;
-        
+
         this.world = world;
         xPicO = 8;
         yPicO = 31;
 
         avoidCliffs = type == Enemy.ENEMY_RED_KOOPA;
-        
+
         noFireballDeath = type == Enemy.ENEMY_SPIKY;
 
         yPic = type;
@@ -83,6 +67,99 @@ public class Enemy extends Sprite
         facing = dir;
         if (facing == 0) facing = 1;
         this.wPic = 16;
+    }
+
+    // the builder class used to build the enemy object
+    // depending on the specified enemy, not all of the parameters are required.
+    // as such, we chose to use the builder in order to minimize the code the user has to
+    // write and also set pre-determined default values.
+    public static class EnemyBuilder {
+      // required parameters from the original enemy object
+      LevelScene world;
+      int x = y = dir = mapX = mapY = 0;
+      boolean winged = false;
+      byte kind = 0;
+      int type = 0;
+
+      // constructor. LevelScene is required to create any type of enemy
+      public EnemyBuilder(LevelScene world) {
+        this.world = world;
+      }
+
+      // set map coordinates and automatically set x and y coordinates as well
+      public EnemyBuilder mapCoordinate (int mapX, int mapY) {
+        this.mapX = mapX;
+        this.mapY = mapY;
+        x = mapX*16+8;
+        y = mapY*16+15;
+        return this;
+      }
+
+      // set whether the enemy object has wings or not (some sprites cannot have wings and will
+      // not change even if winged parameter is set to true)
+      public EnemyBuilder winged (boolean winged) {
+        this.winged = winged;
+        return this;
+      }
+
+      // direction the sprite will be facing. Some enemy objects will have a forced direction regardless
+      // of what is specified here
+      public EnemyBuilder direction (int dir) {
+        this.dir = dir;
+        return this;
+      }
+
+      // type of enemy user wants to create. If we do not know the type number, we can use the different
+      // build functions below instead.
+      public EnemyBuilder type (int type) {
+        this.type = type;
+        return this;
+      }
+
+      // build red koopa with specified EnemyBuilder variables
+      public Enemy buildRedKoopa() {
+        kind = (byte) (4 + ((winged) ? 1 : 0));
+        Enemy enemy = new Enemy(world, x, y, dir, winged, mapX, mapY, kind, ENEMY_RED_KOOPA);
+      }
+
+      // build green koopa with specified EnemyBuilder variables
+      public Enemy buildGreenKoopa() {
+        kind = (byte) (6 + ((winged) ? 1 : 0));
+        Enemy enemy = new Enemy(world, x, y, dir, winged, mapX, mapY, kind, ENEMY_GREEN_KOOPA);
+      }
+
+      // build goomba with specified EnemyBuilder variables
+      public Enemy buildEnemyGoomba() {
+        kind = (byte) (2 + ((winged) ? 1 : 0));
+        Enemy enemy = new Enemy(world, x, y, dir, winged, mapX, mapY, kind, ENEMY_GOOMBA);
+      }
+
+      // build enemy flower with specified EnemyBuilder variables
+      public Enemy buildEnemyFlower() {
+        kind = (byte) (9 + ((winged) ? 1 : 0));
+        Enemy enemy = new Enemy(world, x, y, dir, winged, mapX, mapY, kind, ENEMY_FLOWER);
+      }
+
+      // build spiky with specified EnemyBuilder variables
+      public Enemy buildEnemySpiky() {
+        kind = (byte) (9 + ((winged) ? 1 : 0));
+        Enemy enemy = new Enemy(world, x, y, dir, winged, mapX, mapY, kind, ENEMY_SPIKY);
+      }
+
+      // build any enemy with if type is specified with the integer
+      public Enemy build() {
+        if(type == ENEMY_RED_KOOPA) {
+          return buildRedKoopa();
+        } else if(type == ENEMY_GREEN_KOOPA) {
+          return buildGreenKoopa();
+        } else if(type == ENEMY_GOOMBA) {
+          return buildEnemyGoomba();
+        } else if(type == ENEMY_FLOWER) {
+          return buildEnemyFlower();
+        } else {
+          return buildEnemySpiky();
+        }
+      }
     }
 
     public void collideCheck()
@@ -367,7 +444,7 @@ public class Enemy extends Sprite
             if (yD > -height && yD < fireball.height)
             {
                 if (noFireballDeath) return true;
-                
+
                 xa = fireball.facing * 2;
                 ya = -5;
                 flyDeath = true;
