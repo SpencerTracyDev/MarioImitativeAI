@@ -21,7 +21,8 @@ public class LevelScene extends Scene implements SpriteContext
     private List<Sprite> sprites = new ArrayList<Sprite>();
     private List<Sprite> spritesToAdd = new ArrayList<Sprite>();
     private List<Sprite> spritesToRemove = new ArrayList<Sprite>();
-
+    private SpriteFactory factory = new SpriteFactory(); 			//Need this to use sprites
+    
     public Level level;
     public Mario mario;
     public float xCam, yCam, xCamO, yCamO;
@@ -785,7 +786,7 @@ public class LevelScene extends Scene implements SpriteContext
                                     {
                                         addSprite(new Sparkle(x * 16 + 8, y * 16 + (int) (Math.random() * 16), (float) Math.random() * dir, 0, 0, 1, 5));
                                     }
-                                    addSprite(new BulletBill(this, x * 16 + 8 + dir * 8, y * 16 + 15, dir));
+                                    addSprite(factory.getSpriteType("BulletBill", this, x * 16 + 8 + dir * 8, y * 16 + 15, dir));
                                     hasShotCannon = true;
                                 }
                             }
@@ -1085,17 +1086,17 @@ public class LevelScene extends Scene implements SpriteContext
             {
                 if (!Mario.large)
                 {
-                    addSprite(new Mushroom(this, x * 16 + 8, y * 16 + 8));
+                    addSprite(factory.getSpriteType("Mushroom", this, x * 16 + 8, y * 16 + 8, null));
                 }
                 else
                 {
-                    addSprite(new FireFlower(this, x * 16 + 8, y * 16 + 8));
+                    addSprite(factory.getSpriteType("FireFlower" , this, x * 16 + 8, y * 16 + 8, null));
                 }
             }
             else
             {
                 Mario.getCoin();
-                addSprite(new CoinAnim(x, y));
+                addSprite(factory.getSpriteType("CoinAnim", this, x, y, null));
             }
         }
 
@@ -1123,7 +1124,7 @@ public class LevelScene extends Scene implements SpriteContext
         {
             Mario.getCoin();
             level.setBlock(x, y, (byte) 0);
-            addSprite(new CoinAnim(x, y + 1));
+            addSprite(factory.getSpriteType("CoinAnim", this, x, y + 1, null));
         }
 
         for (Sprite sprite : sprites)
